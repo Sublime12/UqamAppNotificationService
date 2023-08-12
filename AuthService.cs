@@ -1,5 +1,6 @@
 
 
+using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -7,12 +8,13 @@ using System.Text.Json.Serialization;
 public class AuthService
 {
     private HttpClient _httpClient;
-
+    private readonly ILogger<AuthService> _logger;
     public const string LOGIN_URL = "https://monportail.uqam.ca/authentification";
 
-    public AuthService(HttpClient httpClient)
+    public AuthService(HttpClient httpClient, ILogger<AuthService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
     }
 
     /// <summary>
@@ -33,15 +35,22 @@ public class AuthService
         var response = await _httpClient.PostAsync(LOGIN_URL, jsonContent);
 
         var responseAsString = await response.Content.ReadAsStringAsync();
-        LoginResponse? loginResponse = null;
+        LoginResponse? loginResponse;
 
-        loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseAsString, 
-        new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true,
-            DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
-        });
-    
+            loginResponse = JsonSerializer.Deserialize<LoginResponse>(responseAsString, 
+            new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                DictionaryKeyPolicy = JsonNamingPolicy.CamelCase,
+            });
+        }
+        catch (JsonException e)
+        {
+            _logger.LogError($"Exception: {e}");
+            loginResponse = null;
+        }    
         return loginResponse;
     }  
 }
@@ -51,6 +60,7 @@ public class LoginResponse
     public required string Token { get; set; }
 
     public required Utilisateur Utilisateur { get; set; }
+
 }
 
 public class Utilisateur
