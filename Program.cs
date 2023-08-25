@@ -1,4 +1,5 @@
 using UqamAppWorkerService;
+using UqamAppWorkerService.Services;
 
 var builder = Host.CreateDefaultBuilder(args);
 
@@ -11,4 +12,4 @@ builder.ConfigureServices(services =>
 });
 
 var host = builder.Build();
-host.Run();
+await host.RunAsync();

@@ -1,9 +1,9 @@
-
-
 using System.Diagnostics;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+
+namespace UqamAppWorkerService.Services;
 
 public class AuthService
 {
@@ -84,9 +84,9 @@ public class Socio
 public class User
 {
     [JsonPropertyName("identifiant")]
-    public required string Identifiant;
+    public required string Identifiant { get; set; }
 
     [JsonPropertyName("motDePasse")]
-    public required string MotDePasse;
+    public required string MotDePasse { get; set; }
 
 }
