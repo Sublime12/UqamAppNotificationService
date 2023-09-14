@@ -1,8 +1,10 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Toolkit.Uwp.Notifications;
 using UqamAppWorkerService.Models;
 using UqamAppWorkerService.Services;
+using Windows.UI.Notifications;
 
 namespace UqamAppWorkerService;
 
@@ -12,22 +14,26 @@ public class Worker : BackgroundService
     private const string TRIMESTRE_FILE = "trimestresWithActivites.json";
     private readonly IConfiguration _configuration;
     private readonly UqamApiService _uqamAppService;
-
+    private readonly IOldTrimestreTookService _oldTrimestreTookService;
     private static readonly string ApplicationPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
 
     private static readonly string UqamAppPath = Path.Combine(ApplicationPath, "UqamAppService"); 
 
     public Worker(
         IConfiguration configuration, 
-        UqamApiService uqamApiService
+        UqamApiService uqamApiService,
+        IOldTrimestreTookService oldTrimestreTookService 
     )
     {
         _configuration = configuration;
         _uqamAppService = uqamApiService;
+        _oldTrimestreTookService = oldTrimestreTookService;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        ToastNotificationManagerCompat.OnActivated += (toastArgs) => Console.WriteLine("Notification clicked : " + toastArgs.Argument);
+
         while ( !stoppingToken.IsCancellationRequested)
         {
             var permanentCode = _configuration.GetValue<string>("PermanentCode");
@@ -41,6 +47,7 @@ public class Worker : BackgroundService
                 MotDePasse = password,
             };
 
+
             Console.WriteLine(UqamAppPath);
             
             var trimestresWithProgrammes = await _uqamAppService.GetResumeTrimestresAvecActivitesAsync();
@@ -50,27 +57,12 @@ public class Worker : BackgroundService
 
             // Save the refresh data to the file
             Directory.CreateDirectory(UqamAppPath);
-            using (var trimestresFile = File.Open(Path.Combine(UqamAppPath, TRIMESTRE_FILE), FileMode.OpenOrCreate)) 
-            {
-                string oldJson;
-                List<TrimestreAvecProgrammes> oldTrimestresWithProgrammes = null;
-                using (var streamReader = new StreamReader(trimestresFile))
-                {
-                    oldJson = await streamReader.ReadToEndAsync();
-                    if (oldJson.Length == 0) oldJson = "[]";
-                    oldTrimestresWithProgrammes = JsonSerializer.Deserialize<List<TrimestreAvecProgrammes>>(oldJson);
+            var oldTrimestresWithProgrammes = await _oldTrimestreTookService.GetOldTrimestresAsync();
 
-                    // TODO: Compare the old and the new dataset to see if there is a change
+            // TODO: Compare the old and the new dataset to see if there is a change
+            // List<TrimestreAvecProgrammes> diffTrimestres = ComputeDiff(oldTrimestresWithProgrammes, trimestresWithProgrammes);
+            // Console.WriteLine(JsonSerializer.Serialize(diffTrimestres, new JsonSerializerOptions { WriteIndented = true, AllowTrailingCommas = true }));
 
-                }
-            }
-            
-            // The new data from uqam portail become the old one for the next iteration
-            using (var trimestresFile = File.Open(Path.Combine(UqamAppPath, TRIMESTRE_FILE), FileMode.Create))
-            {
-                var json = JsonSerializer.Serialize(trimestresWithProgrammes, new JsonSerializerOptions { WriteIndented = true, AllowTrailingCommas = true });
-                await trimestresFile.WriteAsync(Encoding.UTF8.GetBytes(json));
-            }
 #if WINDOWS
 
 #elif LINUX
@@ -96,6 +88,20 @@ public class Worker : BackgroundService
                     activite.AddEvaluations(evaluations);
                 }
             }
+        }
+    }
+
+    private class TrimestreAvecProgrammesComparer : IEqualityComparer<TrimestreAvecProgrammes>
+    {
+        public bool Equals(TrimestreAvecProgrammes? x, TrimestreAvecProgrammes? y)
+        {
+            if (x is null || y is null) return false;
+            return x.Trimestre == y.Trimestre;
+        }
+
+        public int GetHashCode([DisallowNull] TrimestreAvecProgrammes obj)
+        {
+            return obj.Trimestre.GetHashCode();
         }
     }
 }
