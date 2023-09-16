@@ -65,14 +65,18 @@ public class Worker : BackgroundService
             Directory.CreateDirectory(UqamAppPath);
             var oldTrimestresWithProgrammes = await _oldTrimestreTookService.GetOldTrimestresAsync();
 
-            // var diffTrimestres = CompareDiffTrimestre(trimestresWithProgrammes, oldTrimestresWithProgrammes);
             var diffTrimestres = await _trimestreDiffResolver.GetDiffTrimestresAsync(trimestresWithProgrammes, oldTrimestresWithProgrammes);
 
-            // TODO: Count all the evaluations on the diffTrimestres
             var countEvaluations = diffTrimestres.SelectMany(t => t.Programmes).SelectMany(p => p.Activites).SelectMany(a => a.Evaluations).Count();
-            Console.WriteLine("Count evaluations : " + countEvaluations);
 
-            // TODO: Save the new trimestres in a json file
+            // the fetched data from the uqam portal is saved in the json file
+            // so in the next iteration, our data will be refreshed
+            using (var fileWriter = new StreamWriter(new FileStream(_oldTrimestreTookService.GetOldTrimestresSourcePath(), FileMode.Create)))
+            {
+                var json = JsonSerializer.Serialize(trimestresWithProgrammes, new JsonSerializerOptions { WriteIndented = true, AllowTrailingCommas = true });
+                await fileWriter.WriteAsync(json);
+            }
+
             if (countEvaluations != 0)
             {
 #if WINDOWS
@@ -85,7 +89,7 @@ public class Worker : BackgroundService
 #endif
 
             }
-            await Task.Delay(TimeSpan.FromSeconds(3));
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
         }
     }
 
