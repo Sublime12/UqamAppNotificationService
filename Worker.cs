@@ -97,11 +97,7 @@ public class Worker : BackgroundService
     {
         new ToastContentBuilder()
             .AddText($"Vous avez {countEvaluations} nouvelles évaluations")
-            .AddText("Voici vos notes : \n")
-            .AddText(JsonSerializer.Serialize(
-                diffTrimestres,
-                new JsonSerializerOptions { WriteIndented = true, AllowTrailingCommas = true }
-            ))
+            .AddText("Cliquez pour voir les évaluations")
             .AddArgument(JsonSerializer.Serialize(diffTrimestres))
             .Show();
     }
