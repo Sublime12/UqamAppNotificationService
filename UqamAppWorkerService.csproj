@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>dotnet-UqamAppWorkerService-5ed22f2b-7148-4f2e-bda5-7569d8af9b01</UserSecretsId>
+        <UseWindowsForms Condition="$(TargetFramework) == 'net7.0-windows10.0.17763.0'">true</UseWindowsForms>
     </PropertyGroup>
 
     <!-- <ItemGroup>

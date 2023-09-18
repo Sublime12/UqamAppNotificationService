@@ -38,7 +38,7 @@ public class Worker : BackgroundService
 #if WINDOWS
         HandleWindowsNotification();
 
-        // If the app is launched from a toast notification
+        // If the app is launched from a toast notification (toast notification means notification in Windows)
         // Return directly, dont execute the app logic
         if (ToastNotificationManagerCompat.WasCurrentProcessToastActivated()) return;
 #endif
@@ -56,7 +56,7 @@ public class Worker : BackgroundService
                 MotDePasse = password,
             };
 
-            Console.WriteLine(UqamAppPath);
+            Console.WriteLine($"Uqam app data path : {UqamAppPath}");
 
             var trimestresWithProgrammes = await _uqamAppService.GetResumeTrimestresAvecActivitesAsync();
 
@@ -113,24 +113,31 @@ public class Worker : BackgroundService
             // Console.WriteLine("Notification clicked : " + toastArgs.Argument);
             ToastNotificationManagerCompat.History.Clear();
             var trimestresWithProgrammes = JsonSerializer.Deserialize<List<TrimestreAvecProgrammes>>(toastArgs.Argument);
+            var message = new StringBuilder();
 
             foreach (var trimestre in trimestresWithProgrammes)
             {
                 foreach (var programme in trimestre.Programmes)
                 {
-                    Console.WriteLine($"Trimestre :  {trimestre.Trimestre}, Programme : {programme.Titre}");
+                    // Console.WriteLine($"Trimestre :  {trimestre.Trimestre}, Programme : {programme.Titre}");
+                    message.AppendLine($"Trimestre :  {trimestre.Trimestre}, Programme : {programme.Titre}");
                     foreach (var activite in programme.Activites)
                     {
-                        Console.WriteLine($"Activite : {activite.Sigle}, Groupe : {activite.Groupe}, Titre : {activite.Titre}\n");
+                        // Console.WriteLine($"Activite : {activite.Sigle}, Groupe : {activite.Groupe}, Titre : {activite.Titre}\n");
+                        message.AppendLine($"Activite : {activite.Sigle}, Groupe : {activite.Groupe}, Titre : {activite.Titre}\n");
                         foreach (var evaluation in activite.Evaluations)
                         {
-                            Console.WriteLine($"\t{evaluation.Titre}, \tNote : {evaluation.ResultatNumerique} / {evaluation.ResultatMaximum}");
+                            message.AppendLine($"\t{evaluation.Titre}, \tNote : {evaluation.ResultatNumerique} / {evaluation.ResultatMaximum}");
+                            // Console.WriteLine($"\t{evaluation.Titre}, \tNote : {evaluation.ResultatNumerique} / {evaluation.ResultatMaximum}");
                         }
-                        Console.WriteLine();
+                        // Console.WriteLine();
+                        message.AppendLine();
                     }
 
                 }
             }
+
+            MessageBox.Show(message.ToString());
         };
     }
 

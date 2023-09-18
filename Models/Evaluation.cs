@@ -2,6 +2,10 @@ using System.Text.Json.Serialization;
 
 namespace UqamAppWorkerService.Models;
 
+
+/// <summary>
+/// Maps an evaluation from the uqam api
+/// </summary>
 public class Evaluation
 {
     [JsonPropertyName("id")]

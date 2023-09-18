@@ -2,6 +2,11 @@ using System.Text.Json.Serialization;
 
 namespace UqamAppWorkerService.Models;
 
+
+/// <summary>
+/// Maps an activity from the uqam api
+/// An activity is a course with a group
+/// </summary>
 public class Activite
 {
     [JsonPropertyName("trimestre")]
@@ -16,7 +21,7 @@ public class Activite
     [JsonPropertyName("titreActivite")]
     public required string Titre { get; set; }
 
-    public List<Evaluation> Evaluations { get; init; } = new();
+    public List<Evaluation> Evaluations { get; init; } = new List<Evaluation>();
 
     public Activite AddEvaluation(Evaluation evaluation)
     {
